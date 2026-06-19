@@ -10,16 +10,15 @@ import {
 import * as d3 from "d3";
 
 import {
-  FaCar,
-  FaTruck,
   FaChartLine,
   FaCalendarAlt,
 } from "react-icons/fa";
 
 import {
   DashboardDayData,
-  dashboardMockData,
-} from "./dashboard-mock";
+  DIAS_SEMANA,
+  indiceDiaSemana,
+} from "./dashboard-types";
 import Image from "next/image";
 
 //
@@ -37,6 +36,40 @@ interface Totales {
   total: number;
 }
 
+// Promedio de vehículos atendidos para un
+// día de la semana (ej: el promedio de
+// todos los lunes del intervalo).
+interface PromedioDiaSemana {
+  dia: string;
+  sedan: number;
+  suv: number;
+  grande: number;
+  total: number;
+  muestras: number; // cuántas fechas se promediaron
+}
+
+//
+// ======================================================
+// HELPERS DE FECHA
+// ======================================================
+//
+
+// Fecha local en formato "YYYY-MM-DD".
+function isoDate(d: Date): string {
+  const pad = (n: number) =>
+    String(n).padStart(2, "0");
+
+  return `${d.getFullYear()}-${pad(
+    d.getMonth() + 1
+  )}-${pad(d.getDate())}`;
+}
+
+function diasAtras(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
 //
 // ======================================================
 // COMPONENT
@@ -47,38 +80,89 @@ export default function Dashboard() {
   const [viewMode, setViewMode] =
     useState<ViewMode>("week");
 
-  const [selectedDate, setSelectedDate] =
-    useState<string | null>(null);
-
-  const [popupData, setPopupData] =
-    useState<DashboardDayData | null>(
-      null
-    );
-
   //
   // FECHAS
   //
-
-  const today = "2025-04-30";
-
-  const sevenDaysAgo = "2025-04-23";
+  // Por defecto: últimos 7 días hasta hoy.
+  //
 
   const [fechaInicio, setFechaInicio] =
-    useState(sevenDaysAgo);
+    useState(
+      () => isoDate(diasAtras(6))
+    );
 
   const [fechaFin, setFechaFin] =
-    useState(today);
+    useState(() => isoDate(new Date()));
 
   //
-  // DATA
+  // DATA (real, desde /api/bi/days)
   //
 
-  const filteredData = useMemo(() => {
-    return dashboardMockData.filter(
-      (x) =>
-        x.date >= fechaInicio &&
-        x.date <= fechaFin
-    );
+  const [filteredData, setFilteredData] =
+    useState<DashboardDayData[]>([]);
+
+  const [cargando, setCargando] =
+    useState(false);
+
+  const [error, setError] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    if (
+      fechaInicio > fechaFin
+    ) {
+      setFilteredData([]);
+      setError(
+        "La fecha de inicio no puede ser posterior a la fecha de fin"
+      );
+      return;
+    }
+
+    let cancelado = false;
+
+    setCargando(true);
+    setError(null);
+
+    fetch(
+      `/api/bi/days?from=${fechaInicio}&to=${fechaFin}`
+    )
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(
+            `Error ${res.status}`
+          );
+        }
+
+        return res.json();
+      })
+      .then(
+        (json: {
+          days: DashboardDayData[];
+        }) => {
+          if (cancelado) return;
+
+          setFilteredData(
+            json.days ?? []
+          );
+        }
+      )
+      .catch(() => {
+        if (cancelado) return;
+
+        setFilteredData([]);
+        setError(
+          "No se pudieron cargar los datos del dashboard"
+        );
+      })
+      .finally(() => {
+        if (!cancelado)
+          setCargando(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
   }, [fechaInicio, fechaFin]);
 
   //
@@ -105,19 +189,53 @@ export default function Dashboard() {
   }, [filteredData]);
 
   //
-  // DIA SELECCIONADO
+  // PROMEDIO POR DIA DE SEMANA
+  //
+  // Agrupa las fechas del intervalo por su
+  // día de la semana (lunes..domingo) y
+  // calcula el promedio de vehículos
+  // atendidos por tipo. Así se ve qué días
+  // se atienden más autos.
   //
 
-  const selectedDayData =
-    useMemo<DashboardDayData | null>(() => {
-      if (!selectedDate) return null;
+  const promediosPorDia = useMemo<
+    PromedioDiaSemana[]
+  >(() => {
+    const acc = DIAS_SEMANA.map(
+      (dia) => ({
+        dia,
+        sedan: 0,
+        suv: 0,
+        grande: 0,
+        total: 0,
+        muestras: 0,
+      })
+    );
 
-      return (
-        filteredData.find(
-          (x) => x.date === selectedDate
-        ) || null
-      );
-    }, [selectedDate, filteredData]);
+    for (const item of filteredData) {
+      const a =
+        acc[indiceDiaSemana(item.date)];
+
+      a.sedan += item.cantidad.sedan;
+      a.suv += item.cantidad.suv;
+      a.grande += item.cantidad.grande;
+      a.total += item.cantidad.total;
+      a.muestras += 1;
+    }
+
+    return acc.map((a) =>
+      a.muestras === 0
+        ? a
+        : {
+            ...a,
+            sedan: a.sedan / a.muestras,
+            suv: a.suv / a.muestras,
+            grande:
+              a.grande / a.muestras,
+            total: a.total / a.muestras,
+          }
+    );
+  }, [filteredData]);
 
   return (
     <div className="w-full min-h-screen bg-[#081120] text-white p-6">
@@ -218,19 +336,19 @@ export default function Dashboard() {
         <CardTotal
           title="SEDAN"
           value={totales.sedan}
-          icon={<Image src="/sedan_off.png" width={80} height={20} alt="sedan_img"/>}
+          icon={<Image src="/sedan.png" width={80} height={20} alt="sedan_img"/>}
         />
 
         <CardTotal
           title="SUV"
           value={totales.suv}
-          icon={<Image src="/suv_off.png" width={80} height={20} alt="sedan_img"/>}
+          icon={<Image src="/suv.png" width={80} height={20} alt="sedan_img"/>}
         />
 
         <CardTotal
           title="GRANDE"
           value={totales.grande}
-          icon={<Image src="/grande_off.png" width={80} height={20} alt="sedan_img"/>}
+          icon={<Image src="/grande.png" width={80} height={20} alt="sedan_img"/>}
         />
 
         <CardTotal
@@ -244,31 +362,20 @@ export default function Dashboard() {
       {/* GRAFICOS */}
 
       <div className="mt-2 bg-[#101B2E] border border-neutral-800 rounded-3xl p-6 overflow-x-auto">
-        {viewMode === "week" ? (
-          <LineChart
-            data={filteredData}
-            onSelect={(d) => {
-              setSelectedDate(d.date);
-              setPopupData(d);
-            }}
-          />
+        {error ? (
+          <div className="py-20 text-center text-red-400">
+            {error}
+          </div>
+        ) : cargando ? (
+          <div className="py-20 text-center text-neutral-400 animate-pulse">
+            Cargando datos…
+          </div>
+        ) : viewMode === "week" ? (
+          <LineChart data={filteredData} />
         ) : (
-          <BarChart
-            data={selectedDayData}
-          />
+          <PromedioChart data={promediosPorDia} />
         )}
       </div>
-
-      {/* POPUP */}
-
-      {popupData && (
-        <PopupDia
-          data={popupData}
-          onClose={() =>
-            setPopupData(null)
-          }
-        />
-      )}
     </div>
   );
 }
@@ -281,15 +388,10 @@ export default function Dashboard() {
 
 interface LineChartProps {
   data: DashboardDayData[];
-
-  onSelect: (
-    data: DashboardDayData
-  ) => void;
 }
 
 function LineChart({
   data,
-  onSelect,
 }: LineChartProps) {
   const ref =
     useRef<SVGSVGElement | null>(null);
@@ -484,19 +586,9 @@ function LineChart({
         .attr(
           "fill",
           lineData.color
-        )
-        .style(
-          "cursor",
-          "pointer"
-        )
-        .on(
-          "click",
-          (_, d) => {
-            onSelect(d);
-          }
         );
     });
-  }, [data, onSelect]);
+  }, [data]);
 
   return (
     <div className="w-full">
@@ -518,21 +610,33 @@ function LineChart({
 
 //
 // ======================================================
-// BAR CHART
+// PROMEDIO CHART
 // ======================================================
 //
+// Barras agrupadas por día de la semana.
+// Cada grupo (lunes..domingo) tiene una
+// barra por tipo de vehículo más el total,
+// con el promedio de autos atendidos ese
+// día dentro del intervalo seleccionado.
+//
 
-function BarChart({
+const SUBGRUPOS = [
+  { key: "Sedan", color: "#06B6D4" },
+  { key: "SUV", color: "#22C55E" },
+  { key: "Grande", color: "#F97316" },
+  { key: "Total", color: "#E2E8F0" },
+];
+
+function PromedioChart({
   data,
 }: {
-  data: DashboardDayData | null;
+  data: PromedioDiaSemana[];
 }) {
   const ref =
     useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
-    if (!ref.current || !data)
-      return;
+    if (!ref.current) return;
 
     const svg = d3.select(ref.current);
 
@@ -577,27 +681,24 @@ function BarChart({
       );
 
     //
-    // GROUPS
+    // SOLO DIAS CON DATOS
     //
 
-    const groups = data.hours.map(
-      (x) => x.hour
+    const dias = data.filter(
+      (d) => d.muestras > 0
     );
 
-    const subgroups = [
-      "Sedan",
-      "SUV",
-      "Grande",
-      "Total",
-    ];
+    const subgroups = SUBGRUPOS.map(
+      (s) => s.key
+    );
 
     //
-    // X
+    // X (día de semana) + X interna (tipo)
     //
 
     const x = d3
       .scaleBand()
-      .domain(groups)
+      .domain(dias.map((d) => d.dia))
       .range([0, innerWidth])
       .padding(0.2);
 
@@ -605,14 +706,14 @@ function BarChart({
       .scaleBand()
       .domain(subgroups)
       .range([0, x.bandwidth()])
-      .padding(0.05);
+      .padding(0.08);
 
     //
     // Y
     //
 
     const max =
-      d3.max(data.hours, (d) =>
+      d3.max(dias, (d) =>
         Math.max(
           d.total,
           d.sedan,
@@ -634,12 +735,23 @@ function BarChart({
     const color = d3
       .scaleOrdinal<string>()
       .domain(subgroups)
-      .range([
-        "#06B6D4",
-        "#22C55E",
-        "#F97316",
-        "#E2E8F0",
-      ]);
+      .range(
+        SUBGRUPOS.map((s) => s.color)
+      );
+
+    //
+    // GRID
+    //
+
+    g.append("g")
+      .call(
+        d3
+          .axisLeft(y)
+          .tickSize(-innerWidth)
+          .tickFormat(() => "")
+      )
+      .selectAll("line")
+      .attr("stroke", "#1E293B");
 
     //
     // AXIS
@@ -653,152 +765,122 @@ function BarChart({
       .call(d3.axisBottom(x));
 
     g.append("g").call(
-      d3.axisLeft(y)
+      d3.axisLeft(y).ticks(6)
     );
 
     //
-    // BARS
+    // BARS (agrupadas por día)
     //
 
-    const grouped = g
-      .selectAll("g.layer")
-      .data(data.hours)
+    const grupo = g
+      .selectAll("g.dia")
+      .data(dias)
       .enter()
       .append("g")
+      .attr("class", "dia")
       .attr(
         "transform",
         (d) =>
-          `translate(${x(d.hour) ?? 0},0)`
+          `translate(${x(d.dia) ?? 0},0)`
       );
 
-    grouped
+    grupo
       .selectAll("rect")
       .data((d) => [
-        {
-          key: "Sedan",
-          value: d.sedan,
-        },
-
-        {
-          key: "SUV",
-          value: d.suv,
-        },
-
+        { key: "Sedan", value: d.sedan },
+        { key: "SUV", value: d.suv },
         {
           key: "Grande",
           value: d.grande,
         },
-
-        {
-          key: "Total",
-          value: d.total,
-        },
+        { key: "Total", value: d.total },
       ])
       .enter()
       .append("rect")
       .attr(
         "x",
-        (d) =>
-          xSub(d.key) ?? 0
+        (d) => xSub(d.key) ?? 0
       )
-      .attr(
-        "y",
-        (d) => y(d.value)
-      )
-      .attr(
-        "width",
-        xSub.bandwidth()
-      )
+      .attr("y", (d) => y(d.value))
+      .attr("width", xSub.bandwidth())
       .attr(
         "height",
         (d) =>
-          innerHeight -
-          y(d.value)
+          innerHeight - y(d.value)
       )
+      .attr("rx", 3)
       .attr(
         "fill",
         (d) => color(d.key)
       );
   }, [data]);
 
-  if (!data) {
+  const conDatos = data.some(
+    (d) => d.muestras > 0
+  );
+
+  if (!conDatos) {
     return (
       <div className="py-20 text-center text-neutral-400">
-        Selecciona un día del gráfico
-        semanal
+        No hay datos en el intervalo
+        seleccionado
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-3 mb-5">
-        <FaCalendarAlt className="text-cyan-400 text-2xl" />
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+        <div className="flex items-center gap-3">
+          <FaCalendarAlt className="text-cyan-400 text-2xl" />
 
-        <h2 className="bebas text-4xl">
-          Operaciones Horarias
-        </h2>
+          <h2 className="bebas text-4xl">
+            Promedio por Día de Semana
+          </h2>
+        </div>
+
+        {/* LEYENDA */}
+
+        <div className="flex flex-wrap items-center gap-4">
+          {SUBGRUPOS.map((s) => (
+            <div
+              key={s.key}
+              className="flex items-center gap-2"
+            >
+              <span
+                className="inline-block w-4 h-4 rounded"
+                style={{
+                  backgroundColor:
+                    s.color,
+                }}
+              />
+              <span className="text-neutral-300 text-sm">
+                {s.key}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <svg
         ref={ref}
         className="w-full h-80"
       />
-    </div>
-  );
-}
 
-//
-// ======================================================
-// POPUP
-// ======================================================
-//
+      {/* DETALLE DE MUESTRAS */}
 
-function PopupDia({
-  data,
-  onClose,
-}: {
-  data: DashboardDayData;
-
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-[#101B2E] border border-cyan-500 rounded-3xl p-8 w-[95%] max-w-xl">
-        <div className="flex justify-between items-center">
-          <h2 className="bebas text-5xl text-cyan-400">
-            {data.date}
-          </h2>
-
-          <button
-            onClick={onClose}
-            className="text-4xl"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <PopupCard
-            label="Sedan"
-            value={data.cantidad.sedan}
-          />
-
-          <PopupCard
-            label="SUV"
-            value={data.cantidad.suv}
-          />
-
-          <PopupCard
-            label="Grande"
-            value={data.cantidad.grande}
-          />
-
-          <PopupCard
-            label="Total"
-            value={data.cantidad.total}
-          />
-        </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-xs text-neutral-500">
+        {data
+          .filter((d) => d.muestras > 0)
+          .map((d) => (
+            <span key={d.dia}>
+              {d.dia}: promedio de{" "}
+              {d.muestras}{" "}
+              {d.muestras === 1
+                ? "fecha"
+                : "fechas"}
+            </span>
+          ))}
       </div>
     </div>
   );
@@ -847,27 +929,6 @@ function CardTotal({
         {value.toLocaleString(
           "es-CL"
         )}
-      </div>
-    </div>
-  );
-}
-
-function PopupCard({
-  label,
-  value,
-}: {
-  label: string;
-
-  value: number;
-}) {
-  return (
-    <div className="bg-[#16233B] rounded-2xl p-4 border border-neutral-700">
-      <div className="text-neutral-400">
-        {label}
-      </div>
-
-      <div className="bebas text-5xl text-cyan-400">
-        {value}
       </div>
     </div>
   );

@@ -4,6 +4,9 @@
 // ======================================================
 //
 
+import { ReactElement } from "react";
+import { IconType } from "react-icons";
+
 export type VehiculoId =
   | "auto"
   | "suv"
@@ -14,9 +17,7 @@ export interface Vehiculo {
   nombre: string;
   descripcion: string;
   precio: number;
-
-  imageOn: string;
-  imageOff: string;
+  image: string;
 }
 
 export interface Servicio {
@@ -24,4 +25,5 @@ export interface Servicio {
   nombre: string;
   detalle: string;
   precio: number;
+  icon?: ReactElement;
 }

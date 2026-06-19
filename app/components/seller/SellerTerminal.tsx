@@ -3,12 +3,17 @@
 import { useMemo, useState } from "react";
 
 
-import Header from "./Header";
-import { Servicio, Vehiculo, VehiculoId } from "./types";
+import Header from "../Header";
+import { Servicio, Vehiculo, VehiculoId } from "../types";
 import SelectorTipoVehiculo from "./SelectorTipoVehiculo";
 import ServiciosAdicionales from "./ServiciosAdicionales";
 import SelectorServicioPremium from "./SelectorServicioPremium";
 import DialogEsperandoPago from "./DialogEsperandoPago";
+import { TbWashDryShade, TbWheel } from "react-icons/tb";
+import { RiShieldStarFill } from "react-icons/ri";
+import { FaDroplet } from "react-icons/fa6";
+import { GiCarDoor, GiCarWheel } from "react-icons/gi";
+import { FaCalendarAlt } from "react-icons/fa";
 
 //
 // ======================================================
@@ -24,8 +29,7 @@ const vehiculos: Vehiculo[] = [
             "Sedán, City Car, Jeep 2 puertas",
         precio: 6000,
 
-        imageOn: "/sedan_on.png",
-        imageOff: "/sedan_off.png",
+        image: "/sedan.png"
     },
 
     {
@@ -35,62 +39,61 @@ const vehiculos: Vehiculo[] = [
             "Camionetas, SUV grande",
         precio: 9000,
 
-        imageOn: "/suv_on.png",
-        imageOff: "/suv_off.png",
+        image: "/suv.png"
     },
 
     {
         id: "grande",
-        nombre: "Extra Grande",
+        nombre: "Extra",
         descripcion:
             "Camionetas americanas Z2",
         precio: 12000,
 
-        imageOn: "/grande_on.png",
-        imageOff: "/grande_off.png",
+        image: "/grande.png"
     },
 ];
 
 const adicionales: Servicio[] = [
     {
         id: "pisos",
-        nombre:
-            "Lavado de pisos gomas",
+        nombre: "Lavado de pisos gomas",
         detalle: "4 gomas",
         precio: 1000,
+        icon: <TbWashDryShade />
     },
 
     {
         id: "embarrado",
-        nombre:
-            "Vehículo embarrado",
+        nombre: "Vehículo embarrado",
         detalle: "General",
         precio: 3000,
+        icon: <RiShieldStarFill />
     },
 
     {
         id: "pick-up",
-        nombre:
-            "Hidrolavado pick-up",
-        detalle:
-            "Parte trasera camionetas",
+        nombre: "Hidrolavado pick-up",
+        detalle: "Parte trasera camionetas",
         precio: 2500,
+        icon: <FaDroplet />
     },
 
     {
         id: "puertas",
         nombre:
-            "Limpieza marcos puertas",
+            "Marcos puertas",
         detalle: "4 puertas",
         precio: 4000,
+        icon: <GiCarDoor />
     },
 
     {
         id: "llantas",
         nombre:
-            "Limpieza guardafango y llantas",
+            "Guardafango / llantas",
         detalle: "Llantas",
         precio: 3000,
+        icon: <TbWheel />
     },
 
     {
@@ -99,8 +102,13 @@ const adicionales: Servicio[] = [
             "Renovador de neumáticos",
         detalle: "4 neumáticos",
         precio: 2500,
+        icon: <GiCarWheel />
     },
 ];
+
+// Patente chilena (norma actual): solo consonantes, excluyendo M, N, Ñ y Q.
+// Formato vigente: 4 consonantes + 2 dígitos (BBBB·NN) y nuevo formato 2025: 5 consonantes + 1 dígito.
+const PATENTE_REGEX = /^[BCDFGHJKLPRSTVWXYZ]{4}\d{2}$|^[BCDFGHJKLPRSTVWXYZ]{5}\d$/;
 
 //
 // ======================================================
@@ -117,6 +125,7 @@ export default function SellerTerminal() {
     );
 
     const [showConfirmar, setShowConfirmar] = useState(false);
+    const [patente, setPatente] = useState<string>("");
 
     const [
         serviciosSeleccionados,
@@ -193,6 +202,63 @@ export default function SellerTerminal() {
         premium,
     ]);
 
+    const patenteValida = PATENTE_REGEX.test(patente);
+
+    //
+    // ======================================================
+    // CONFIRMAR ORDEN
+    // ======================================================
+    //
+
+    const resetTerminal = () => {
+        setPremium(false);
+        setServiciosSeleccionados([]);
+        setVehiculoSeleccionado(null);
+        setPatente("");
+        setShowConfirmar(false);
+    };
+
+    const confirmarOrden = async () => {
+        const vehiculo = vehiculos.find(
+            (x) => x.id === vehiculoSeleccionado
+        );
+
+        const servicios = serviciosSeleccionados
+            .map((id) => adicionales.find((x) => x.id === id))
+            .filter((x): x is Servicio => Boolean(x))
+            .map(({ id, precio }) => ({ id, precio }));
+
+        try {
+            const res = await fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    patente,
+                    vehiculo: vehiculo
+                        ? {
+                              id: vehiculo.id,
+                              precio: vehiculo.precio,
+                          }
+                        : null,
+                    servicios,
+                    premium,
+                    total,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                console.error("Error al crear la orden:", data);
+                return;
+            }
+        } catch (error) {
+            console.error("Error al crear la orden:", error);
+            return;
+        }
+
+        resetTerminal();
+    };
+
     //
     // ======================================================
     // UI
@@ -200,18 +266,17 @@ export default function SellerTerminal() {
     //
 
     return (
-        <div className="h-screen text-neutral-950 bg-white overflow-hidden">
-            <div className="h-screen overflow-y-scroll mx-auto space-y-4 p-2 pb-32">
-                {/* HEADER */}
-
-
-
+        <div className="h-screen text-neutral-950 bg-[#FCFCFC] overflow-hidden">
+            <div className="h-screen overflow-hidden mx-auto space-y-2 p-2 pb-32">                
                 {/* VEHICULOS */}
 
                 <SelectorTipoVehiculo
                     vehiculos={vehiculos}
                     vehiculoSeleccionado={vehiculoSeleccionado}
                     onSelected={setVehiculoSeleccionado}
+                    patente={patente}
+                    setPatente={setPatente}
+                    patenteValida={patenteValida}
                 />
 
                 {/* ADICIONALES */}
@@ -233,36 +298,26 @@ export default function SellerTerminal() {
 
             </div>
             {/* TOTAL */}
-            <div className="fixed bottom-0 w-full py-2 px-4 bg-[#1F2C4D] text-white">
-                <div className="flex items-center justify-between">
-                    <div>
+            <div className="w-full fixed bottom-0 py-2 px-2 text-white">
+                <div className="w-full flex items-center justify-between bg-[#1F2C4D] px-6 py-4 rounded-xl">
+                    <div className="w-1/2 border-r border-[#F6AA0A]">
                         <div className="text-neutral-100 text-sm uppercase tracking-widest">
                             Total
                         </div>
 
-                        <div
-                            className={`bebas text-7xl leading-none`}
-                        >
-                            $
-                            {total.toLocaleString(
-                                "es-CL"
-                            )}
+                        <div className={`bebas text-3xl leading-none text-[#F6AA0A] font-bold`}>
+                            $ {total.toLocaleString("es-CL")}
                         </div>
                     </div>
 
-                    <button className={`bg-white hover:bg-cyan-400 text-[#1F2C4D] text-2xl font-bold px-8 py-4 rounded-2xl transition-all ${!vehiculoSeleccionado && 'opacity-20'}`}
-                        disabled={!vehiculoSeleccionado}
+                    <button className={`w-1/2 flex ml-4 bg-[#F6AA0A] text-[#1F2C4D] text-xl font-bold px-6 py-4 rounded-2xl transition-all ${(!vehiculoSeleccionado || (!patenteValida && patente.length > 0)) && 'opacity-20'}`}
+                        disabled={!vehiculoSeleccionado || (!patenteValida && patente.length > 0)}
                         onClick={() => setShowConfirmar(true)}>
-                        Reservar
+                            <FaCalendarAlt size={18} className="relative top-1" />
+                            <p className="ml-4">Reservar</p>
                     </button>
                     <DialogEsperandoPago open={showConfirmar} total={total}
-                        onClose={() => {
-                            setPremium(false);
-                            setServiciosSeleccionados([]);
-                            setVehiculoSeleccionado(null);
-                            setShowConfirmar(false)
-                        }
-                        } />
+                        onClose={confirmarOrden} />
                 </div>
             </div>
         </div>

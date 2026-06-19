@@ -1,57 +1,49 @@
 "use client";
 
 import { useState } from "react";
-
 import Image from "next/image";
-
 import {
   FaEnvelope,
   FaLock,
   FaArrowRight,
 } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { getSession, signIn } from "next-auth/react";
+import { useForm } from 'react-hook-form';
+
+interface LoginProps {
+  email: string;
+  password: string;
+}
 
 export default function LoginForm() {
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { register, handleSubmit } = useForm<LoginProps>({
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
 
-  const [email, setEmail] =
-    useState("");
+  const onSubmit = async (data: LoginProps) => {
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+    if (result?.error) {
+      return;
+    }
 
-  const [password, setPassword] =
-    useState("");
+    const session = await getSession();
 
-    const router = useRouter();
+    console.log("SESSION", session);
 
-  const onSubmit = async (
-    e: React.FormEvent
-  ) => {
-    e.preventDefault();
-
-    try {
-      setLoading(true);
-
-      //
-      // LOGIN
-      //
-
-      console.log({
-        email,
-        password,
-      });
-
-      //
-      // TODO:
-      // signIn(...)
-      //
-      const nick = email.split("@")[0];
-      if(nick === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/seller");
-      }
-    } finally {
-      setLoading(false);
+    if (session?.user.role === "OPERADOR") {
+      router.push("/seller");
+    } else {
+      router.push("/dashboard");
     }
   };
 
@@ -90,7 +82,7 @@ export default function LoginForm() {
             {/* FORM */}
 
             <form
-              onSubmit={onSubmit}
+              onSubmit={handleSubmit(onSubmit)}
               className="mt-10 space-y-5"
             >
               {/* EMAIL */}
@@ -105,12 +97,7 @@ export default function LoginForm() {
 
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) =>
-                      setEmail(
-                        e.target.value
-                      )
-                    }
+                    {...register('email', { required: true })}
                     placeholder="correo@empresa.cl"
                     className="w-full h-14 rounded-2xl border border-[#D6E6EF] bg-[#F8FCFF] pl-12 pr-4 text-[#071E33] placeholder:text-[#8AA1B3] outline-none transition-all focus:border-[#0890C9] focus:ring-4 focus:ring-[#0890C9]/15"
                     required
@@ -130,12 +117,7 @@ export default function LoginForm() {
 
                   <input
                     type="password"
-                    value={password}
-                    onChange={(e) =>
-                      setPassword(
-                        e.target.value
-                      )
-                    }
+                    {...register('password', { required: true })}
                     placeholder="••••••••"
                     className="w-full h-14 rounded-2xl border border-[#D6E6EF] bg-[#F8FCFF] pl-12 pr-4 text-[#071E33] placeholder:text-[#8AA1B3] outline-none transition-all focus:border-[#0890C9] focus:ring-4 focus:ring-[#0890C9]/15"
                     required

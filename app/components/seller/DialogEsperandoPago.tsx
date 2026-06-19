@@ -57,7 +57,7 @@ export default function DialogEsperandoPago({
           <div className="mt-6 flex items-center justify-center gap-3">
             <ImSpinner2 className="animate-spin text-3xl text-cyan-400" />
 
-            <h2 className="bebas text-5xl tracking-wide text-white">
+            <h2 className="bebas text-3xl tracking-wide text-white">
               Esperando Pago
             </h2>
           </div>

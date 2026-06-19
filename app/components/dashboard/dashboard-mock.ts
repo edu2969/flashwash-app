@@ -1,40 +1,8 @@
-//
-// ======================================================
-// TYPES
-// ======================================================
-//
-
-export interface DashboardHourData {
-  hour: string;
-
-  sedan: number;
-
-  suv: number;
-
-  grande: number;
-
-  total: number;
-}
-
-export interface DashboardDayData {
-  date: string;
-
-  cantidad: {
-    sedan: number;
-    suv: number;
-    grande: number;
-    total: number;
-  };
-
-  ingresos: {
-    sedan: number;
-    suv: number;
-    grande: number;
-    total: number;
-  };
-
-  hours: DashboardHourData[];
-}
+import {
+  DashboardDayData,
+  DashboardHourData,
+  indiceDiaSemana,
+} from "./dashboard-types";
 
 //
 // ======================================================
@@ -64,6 +32,25 @@ function rand(
     random() * (max - min + 1) + min
   );
 }
+
+//
+// ======================================================
+// DIA DE SEMANA
+// ======================================================
+//
+
+// Factor de demanda por día de semana.
+// El fin de semana se atienden más autos
+// que a mitad de semana. Índice 0 = Lunes.
+const FACTOR_DIA = [
+  0.6, // Lunes
+  0.7, // Martes
+  0.85, // Miércoles
+  1.0, // Jueves
+  1.4, // Viernes
+  1.9, // Sábado
+  1.3, // Domingo
+];
 
 //
 // ======================================================
@@ -111,13 +98,21 @@ const END_DATE =
 // ======================================================
 //
 
-function generarHoras(): DashboardHourData[] {
+function generarHoras(
+  factor: number
+): DashboardHourData[] {
   return HORARIOS.map((hour) => {
-    const sedan = rand(0, 8);
+    const sedan = Math.round(
+      rand(0, 8) * factor
+    );
 
-    const suv = rand(0, 6);
+    const suv = Math.round(
+      rand(0, 6) * factor
+    );
 
-    const grande = rand(0, 4);
+    const grande = Math.round(
+      rand(0, 4) * factor
+    );
 
     return {
       hour,
@@ -143,7 +138,12 @@ function generarHoras(): DashboardHourData[] {
 function generarDia(
   date: string
 ): DashboardDayData {
-  const hours = generarHoras();
+  const factor =
+    FACTOR_DIA[
+      indiceDiaSemana(date)
+    ];
+
+  const hours = generarHoras(factor);
 
   const sedan =
     hours.reduce(
