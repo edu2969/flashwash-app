@@ -1,20 +1,29 @@
 import { MongoClient } from "mongodb";
 
-export async function connectDB() {
-  try {
-    console.log("connecting");
+const uri = process.env.MONGODB_URI!;
 
-    const client = new MongoClient(
-      process.env.MONGODB_URI!
-    );
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
 
-    await client.connect();
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoClientPromise: Promise<MongoClient> | undefined;
+}
 
-    console.log("connected");
-
-    return client.db(); // Devuelve la base de datos por defecto especificada en la URI
-  } catch (error) {
-    console.error(error);
-    throw error;
+if (process.env.NODE_ENV === "development") {
+  if (!global.mongoClientPromise) {
+    client = new MongoClient(uri);
+    global.mongoClientPromise = client.connect();
   }
+
+  clientPromise = global.mongoClientPromise;
+} else {
+  client = new MongoClient(uri);
+  clientPromise = client.connect();
+}
+
+export async function connectDB() {
+  const client = await clientPromise;
+
+  return client.db();
 }

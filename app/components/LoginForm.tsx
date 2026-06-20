@@ -19,6 +19,7 @@ interface LoginProps {
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit } = useForm<LoginProps>({
     defaultValues: {
       email: '',
@@ -27,18 +28,22 @@ export default function LoginForm() {
   })
 
   const onSubmit = async (data: LoginProps) => {
+    setLoading(true);
+    setError(null);
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
+
+    setLoading(false);
+
     if (result?.error) {
+      setError(result?.error ?? "Error al autenticar");
       return;
     }
 
     const session = await getSession();
-
-    console.log("SESSION", session);
 
     if (session?.user.role === "OPERADOR") {
       router.push("/seller");
@@ -158,7 +163,7 @@ export default function LoginForm() {
 
           <div className="px-8 py-2 bg-[#F8FBFD] border-t border-[#E3EEF5] text-center">
             <p className="text-sm text-[#6B8295]">
-              Powered by yGa 
+              {error !== null ? <span className="text-orange-600">{error}</span> : <>Powered by yGa</>}
             </p>
           </div>
         </div>
