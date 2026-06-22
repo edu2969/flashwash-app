@@ -28,7 +28,7 @@ const vehiculos: Vehiculo[] = [
         descripcion:
             "Sedán, City Car, Jeep 2 puertas",
         precio: 6000,
-
+        durationMins: 4,
         image: "/sedan.png"
     },
 
@@ -38,7 +38,7 @@ const vehiculos: Vehiculo[] = [
         descripcion:
             "Camionetas, SUV grande",
         precio: 9000,
-
+        durationMins: 5,
         image: "/suv.png"
     },
 
@@ -48,7 +48,7 @@ const vehiculos: Vehiculo[] = [
         descripcion:
             "Camionetas americanas Z2",
         precio: 12000,
-
+        durationMins: 6,
         image: "/grande.png"
     },
 ];
@@ -59,6 +59,7 @@ const adicionales: Servicio[] = [
         nombre: "Lavado de pisos gomas",
         detalle: "4 gomas",
         precio: 1000,
+        durationMins: 2,
         icon: <TbWashDryShade />
     },
 
@@ -67,6 +68,7 @@ const adicionales: Servicio[] = [
         nombre: "Vehículo embarrado",
         detalle: "General",
         precio: 3000,
+        durationMins: 4,
         icon: <RiShieldStarFill />
     },
 
@@ -75,6 +77,7 @@ const adicionales: Servicio[] = [
         nombre: "Hidrolavado pick-up",
         detalle: "Parte trasera camionetas",
         precio: 2500,
+        durationMins: 6,
         icon: <FaDroplet />
     },
 
@@ -84,6 +87,7 @@ const adicionales: Servicio[] = [
             "Marcos puertas",
         detalle: "4 puertas",
         precio: 4000,
+        durationMins: 5,
         icon: <GiCarDoor />
     },
 
@@ -93,6 +97,7 @@ const adicionales: Servicio[] = [
             "Guardafango / llantas",
         detalle: "Llantas",
         precio: 3000,
+        durationMins: 2,
         icon: <TbWheel />
     },
 
@@ -102,6 +107,7 @@ const adicionales: Servicio[] = [
             "Renovador de neumáticos",
         detalle: "4 neumáticos",
         precio: 2500,
+        durationMins: 4,
         icon: <GiCarWheel />
     },
 ];
@@ -109,6 +115,9 @@ const adicionales: Servicio[] = [
 // Patente chilena (norma actual): solo consonantes, excluyendo M, N, Ñ y Q.
 // Formato vigente: 4 consonantes + 2 dígitos (BBBB·NN) y nuevo formato 2025: 5 consonantes + 1 dígito.
 const PATENTE_REGEX = /^[BCDFGHJKLPRSTVWXYZ]{4}\d{2}$|^[BCDFGHJKLPRSTVWXYZ]{5}\d$/;
+
+const PREMIUM_PRECIO = 2000;
+const PREMIUM_DURATION_MINS = 5;
 
 //
 // ======================================================
@@ -192,10 +201,48 @@ export default function SellerTerminal() {
         }
 
         if (premium) {
-            total += 2000;
+            total += PREMIUM_PRECIO;
         }
 
         return total;
+    }, [
+        vehiculoSeleccionado,
+        serviciosSeleccionados,
+        premium,
+    ]);
+
+    //
+    // ======================================================
+    // DURACIÓN TOTAL
+    // ======================================================
+    //
+
+    const duracionTotal = useMemo(() => {
+        let mins = 0;
+
+        const vehiculo = vehiculos.find(
+            (x) => x.id === vehiculoSeleccionado
+        );
+
+        if (vehiculo) {
+            mins += vehiculo.durationMins;
+        }
+
+        for (const servicioId of serviciosSeleccionados) {
+            const servicio = adicionales.find(
+                (x) => x.id === servicioId
+            );
+
+            if (servicio) {
+                mins += servicio.durationMins;
+            }
+        }
+
+        if (premium) {
+            mins += PREMIUM_DURATION_MINS;
+        }
+
+        return mins;
     }, [
         vehiculoSeleccionado,
         serviciosSeleccionados,
@@ -243,6 +290,7 @@ export default function SellerTerminal() {
                     servicios,
                     premium,
                     total,
+                    duracionMins: duracionTotal,
                 }),
             });
 
@@ -308,6 +356,12 @@ export default function SellerTerminal() {
                         <div className={`bebas text-3xl leading-none text-[#F6AA0A] font-bold`}>
                             $ {total.toLocaleString("es-CL")}
                         </div>
+
+                        {duracionTotal > 0 && (
+                            <div className="text-neutral-300 text-xs mt-1">
+                                ≈ {duracionTotal} min
+                            </div>
+                        )}
                     </div>
 
                     <button className={`w-1/2 flex ml-4 bg-[#F6AA0A] text-[#1F2C4D] text-xl font-bold px-6 py-4 rounded-2xl transition-all ${(!vehiculoSeleccionado || (!patenteValida && patente.length > 0)) && 'opacity-20'}`}

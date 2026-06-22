@@ -19,9 +19,6 @@ const handler = NextAuth({
         console.log("credentials", credentials);
         const db = await connectDB();
 
-        console.log("db", db);
-
-
         const user = await db
           .collection("users")
           .findOne({
@@ -71,7 +68,11 @@ const handler = NextAuth({
       session.user.id = token.sub!;
       // Ensure role matches expected union type
       const role = token.role as string | undefined;
-      if (role === "OPERADOR" || role === "ADMINISTRADOR") {
+      if (
+        role === "OPERADOR" ||
+        role === "ADMINISTRADOR" ||
+        role === "MARKETING"
+      ) {
         session.user.role = role;
       } else {
         // fallback or undefined if role is unexpected

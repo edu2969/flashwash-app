@@ -17,6 +17,7 @@ export interface Vehiculo {
   nombre: string;
   descripcion: string;
   precio: number;
+  durationMins: number;
   image: string;
 }
 
@@ -25,5 +26,6 @@ export interface Servicio {
   nombre: string;
   detalle: string;
   precio: number;
+  durationMins: number;
   icon?: ReactElement;
 }

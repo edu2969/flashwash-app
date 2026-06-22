@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
+import Providers from "./components/Providers";
 
 const bebas = Bebas_Neue({
     subsets: ["latin"],
@@ -52,7 +53,7 @@ export default function RootLayout({
       className={`${bebas.className} ${oswald.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <Providers>{children}</Providers>
         <ServiceWorkerRegister />
       </body>
     </html>

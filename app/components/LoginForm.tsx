@@ -44,11 +44,17 @@ export default function LoginForm() {
     }
 
     const session = await getSession();
-
-    if (session?.user.role === "OPERADOR") {
+    console.log("SESSION?", session);
+    const role = session?.user.role;
+    console.log("ROLE", role);
+    if (role === "OPERADOR") {
       router.push("/seller");
-    } else {
+    } else if(role === "ADMINISTRADOR") {
       router.push("/dashboard");
+    } else if(role === "MARKETING") {
+      router.push("/marketing")
+    } else {
+      setError("Sin perfil");
     }
   };
 

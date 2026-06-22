@@ -66,14 +66,22 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Las peticiones con Range (p. ej. <video>) responden 206 Partial Content,
+  // que la Cache API no admite. Las dejamos pasar sin cachear.
+  if (request.headers.has('range')) return
+
   // Assets estáticos: cache-first, poblando el runtime cache al vuelo.
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached
       return fetch(request).then((response) => {
-        if (response.ok && response.type === 'basic') {
+        // Solo cacheamos respuestas completas (200), nunca parciales (206).
+        if (response.status === 200 && response.type === 'basic') {
           const copy = response.clone()
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy))
+          caches
+            .open(RUNTIME_CACHE)
+            .then((cache) => cache.put(request, copy))
+            .catch(() => {})
         }
         return response
       })

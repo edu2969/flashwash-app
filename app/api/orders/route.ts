@@ -6,6 +6,49 @@ import { registrarOrdenBI } from "@/lib/bi";
 // Formato vigente: 4 consonantes + 2 dígitos (BBBB·NN) y nuevo formato 2025: 5 consonantes + 1 dígito.
 const PATENTE_REGEX = /^[BCDFGHJKLPRSTVWXYZ]{4}\d{2}$|^[BCDFGHJKLPRSTVWXYZ]{5}\d$/;
 
+// Devuelve las órdenes que aún están pendientes: aquellas cuyo término estimado
+// (createdAt + duracionMins) todavía no ha pasado. Las que ya terminaron desaparecen.
+export async function GET() {
+  try {
+    const db = await connectDB();
+
+    const docs = await db
+      .collection("orders")
+      .find({})
+      .sort({ createdAt: 1 })
+      .toArray();
+
+    const now = Date.now();
+
+    const pendientes = docs
+      .map((o) => {
+        const duracionMins = Number(o.duracionMins) || 0;
+        const createdAt = new Date(o.createdAt).getTime();
+        const endAt = createdAt + duracionMins * 60_000;
+
+        return {
+          id: o._id.toString(),
+          patente: typeof o.patente === "string" ? o.patente : "",
+          vehiculoId:
+            typeof o.vehiculo?.id === "string" ? o.vehiculo.id : "",
+          total: Number(o.total) || 0,
+          duracionMins,
+          createdAt,
+          endAt,
+        };
+      })
+      .filter((o) => o.endAt > now);
+
+    return NextResponse.json({ orders: pendientes });
+  } catch (error) {
+    console.error("Error al listar órdenes:", error);
+    return NextResponse.json(
+      { error: "Error al listar órdenes" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -45,6 +88,7 @@ export async function POST(req: NextRequest) {
       servicios: Array.isArray(body.servicios) ? body.servicios : [],
       premium: Boolean(body.premium),
       total: Number(body.total) || 0,
+      duracionMins: Number(body.duracionMins) || 0,
       createdAt: new Date(),
     };
 
