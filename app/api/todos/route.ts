@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { registrarOrdenBI } from "@/lib/bi";
-import { ObjectId } from "mongodb";
 
 // Patente chilena (norma actual): solo consonantes, excluyendo M, N, Ñ y Q.
 // Formato vigente: 4 consonantes + 2 dígitos (BBBB·NN) y nuevo formato 2025: 5 consonantes + 1 dígito.
@@ -13,17 +12,13 @@ export async function GET() {
   try {
     const db = await connectDB();
 
-    console.log("Fetching pending orders...");
-
     const docs = await db
       .collection("orders")
-      .find({ endAt: { $exists: false } })
-      .sort({ createdAt: -1 })
+      .find({
+        endAt: { $exists: false },
+      })
+      .sort({ createdAt: 1 })
       .toArray();
-
-    console.log("Fetched orders:", docs.length);
-
-    const now = Date.now();
 
     const pendientes = docs
       .map((o) => {
@@ -39,10 +34,11 @@ export async function GET() {
           total: Number(o.total) || 0,
           duracionMins,
           createdAt,
+          servicios: Array.isArray(o.servicios) ? o.servicios : [],
+          premium: Boolean(o.premium),
           endAt,
         };
-      })
-      .filter((o) => o.endAt > now);
+      });
 
     return NextResponse.json({ orders: pendientes });
   } catch (error) {
@@ -120,45 +116,6 @@ export async function POST(req: NextRequest) {
     console.error("Error al crear la orden:", error);
     return NextResponse.json(
       { error: "Error al crear la orden" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(req: NextRequest) {
-  console.log("Patching order...");
-  try {
-    const body = await req.json();
-
-    if (!body.orderId) {
-      return NextResponse.json(
-        { error: "Debe especificar el ID de la orden" },
-        { status: 400 }
-      );
-    }
-
-    const db = await connectDB();
-
-    const result = await db.collection("orders").updateOne(
-      { _id: new ObjectId(body.orderId) },
-      { $set: { endAt: new Date() } }
-    );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: "Orden no encontrada" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: "Orden actualizada exitosamente" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error al actualizar la orden:", error);
-    return NextResponse.json(
-      { error: "Error al actualizar la orden" },
       { status: 500 }
     );
   }

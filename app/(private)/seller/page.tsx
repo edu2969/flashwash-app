@@ -1,7 +1,7 @@
-import SellerTerminal from "@/app/components/seller/SellerTerminal";
+import OperatorPanel from "@/app/components/seller/OperatorPanel";
 
 export default function Home() {
   return (
-    <SellerTerminal />
+    <OperatorPanel />
   );
 }

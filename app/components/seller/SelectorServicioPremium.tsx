@@ -20,16 +20,16 @@ export default function SelectorServicioPremium({
         `}
         >
           <div className="flex items-center justify-between">
-            <FaStar size={24} className="w-10 h-10 bg-[#FCF5EB] text-[#F6AA0A] p-2 rounded-md" />
-            <div className="text-left">
-              <div className={`bebas text-xl font-bold`}>Servicio Premium</div>
-              <div className="text-neutral-400">
+            <FaStar size={24} className={`${premium ? 'bg-[#1F2C4D]' : 'bg-[#FCF5EB]'} w-24 h-24 text-[#F6AA0A] p-2 rounded-md`} />
+            <div className="flex text-left">
+              <div className={`bebas text-6xl font-bold`}>Servicio<br/>Premium</div>
+              <div className="text-neutral-400 text-5xl mt-18 ml-6 mr-14">
                 Cerámico
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <div className={`bebas text-2xl font-bold ${
+              <div className={`bebas text-7xl font-bold ${
                   premium
                     ? "text-[#F6AA0A]"
                     : "text-neutral-400"

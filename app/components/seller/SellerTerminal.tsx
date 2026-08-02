@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 
 
-import Header from "../Header";
 import { Servicio, Vehiculo, VehiculoId } from "../types";
 import SelectorTipoVehiculo from "./SelectorTipoVehiculo";
 import ServiciosAdicionales from "./ServiciosAdicionales";
@@ -346,29 +345,27 @@ export default function SellerTerminal() {
 
             </div>
             {/* TOTAL */}
-            <div className="w-full fixed bottom-0 py-2 px-2 text-white">
+            <div className="w-1/2 fixed bottom-0 py-2 px-2 text-white">
                 <div className="w-full flex items-center justify-between bg-[#1F2C4D] px-6 py-4 rounded-xl">
                     <div className="w-1/2 border-r border-[#F6AA0A]">
-                        <div className="text-neutral-100 text-sm uppercase tracking-widest">
+                        <div className="text-neutral-100 text-3xl uppercase tracking-widest">
                             Total
                         </div>
 
-                        <div className={`bebas text-3xl leading-none text-[#F6AA0A] font-bold`}>
+                        <div className={`bebas text-7xl leading-none text-[#F6AA0A] font-bold`}>
                             $ {total.toLocaleString("es-CL")}
                         </div>
 
-                        {duracionTotal > 0 && (
-                            <div className="text-neutral-300 text-xs mt-1">
-                                ≈ {duracionTotal} min
-                            </div>
-                        )}
+                        <div className={`${duracionTotal > 0 ? 'text-neutral-300' : 'text-neutral-500'} text-3xl mt-1`}>
+                            ≈ {duracionTotal > 0 ? duracionTotal + ' min' : 'Nada seleccionado'}
+                        </div>                        
                     </div>
 
-                    <button className={`w-1/2 flex ml-4 bg-[#F6AA0A] text-[#1F2C4D] text-xl font-bold px-6 py-4 rounded-2xl transition-all ${(!vehiculoSeleccionado || (!patenteValida && patente.length > 0)) && 'opacity-20'}`}
-                        disabled={!vehiculoSeleccionado || (!patenteValida && patente.length > 0)}
+                    <button className={`w-1/2 flex ml-4 bg-[#F6AA0A] text-[#1F2C4D] text-xl font-bold px-6 py-4 rounded-2xl transition-all ${(!vehiculoSeleccionado || !patenteValida) && 'opacity-20'}`}
+                        disabled={!vehiculoSeleccionado || !patenteValida}
                         onClick={() => setShowConfirmar(true)}>
-                            <FaCalendarAlt size={18} className="relative top-1" />
-                            <p className="ml-4">Reservar</p>
+                            <FaCalendarAlt size={72} className="relative top-1" />
+                            <p className="ml-8 mt-2 text-6xl">Reservar</p>
                     </button>
                     <DialogEsperandoPago open={showConfirmar} total={total}
                         onClose={confirmarOrden} />
