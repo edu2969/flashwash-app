@@ -313,8 +313,8 @@ export default function SellerTerminal() {
     //
 
     return (
-        <div className="h-screen text-neutral-950 bg-[#FCFCFC] overflow-hidden">
-            <div className="h-screen overflow-hidden mx-auto space-y-2 p-2 pb-32">                
+        <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#FCFCFC] text-neutral-950">
+            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2">
                 {/* VEHICULOS */}
 
                 <SelectorTipoVehiculo
@@ -345,27 +345,27 @@ export default function SellerTerminal() {
 
             </div>
             {/* TOTAL */}
-            <div className="w-1/2 fixed bottom-0 py-2 px-2 text-white">
-                <div className="w-full flex items-center justify-between bg-[#1F2C4D] px-6 py-4 rounded-xl">
+            <div className="shrink-0 px-2 pb-2 text-white">
+                <div className="flex w-full items-center justify-between rounded-xl bg-[#1F2C4D] px-5 py-3">
                     <div className="w-1/2 border-r border-[#F6AA0A]">
-                        <div className="text-neutral-100 text-3xl uppercase tracking-widest">
+                        <div className="text-xl uppercase tracking-widest text-neutral-100">
                             Total
                         </div>
 
-                        <div className={`bebas text-7xl leading-none text-[#F6AA0A] font-bold`}>
+                        <div className="bebas text-5xl font-bold leading-none text-[#F6AA0A]">
                             $ {total.toLocaleString("es-CL")}
                         </div>
 
-                        <div className={`${duracionTotal > 0 ? 'text-neutral-300' : 'text-neutral-500'} text-3xl mt-1`}>
+                        <div className={`mt-1 text-lg ${duracionTotal > 0 ? 'text-neutral-300' : 'text-neutral-500'}`}>
                             ≈ {duracionTotal > 0 ? duracionTotal + ' min' : 'Nada seleccionado'}
                         </div>                        
                     </div>
 
-                    <button className={`w-1/2 flex ml-4 bg-[#F6AA0A] text-[#1F2C4D] text-xl font-bold px-6 py-4 rounded-2xl transition-all ${(!vehiculoSeleccionado || !patenteValida) && 'opacity-20'}`}
+                    <button className={`ml-4 flex w-1/2 items-center justify-center gap-3 rounded-xl bg-[#F6AA0A] px-4 py-3 text-xl font-bold text-[#1F2C4D] transition-all ${(!vehiculoSeleccionado || !patenteValida) && 'opacity-20'}`}
                         disabled={!vehiculoSeleccionado || !patenteValida}
                         onClick={() => setShowConfirmar(true)}>
-                            <FaCalendarAlt size={72} className="relative top-1" />
-                            <p className="ml-8 mt-2 text-6xl">Reservar</p>
+                            <FaCalendarAlt size={48} />
+                            <p className="text-4xl">Reservar</p>
                     </button>
                     <DialogEsperandoPago open={showConfirmar} total={total}
                         onClose={confirmarOrden} />

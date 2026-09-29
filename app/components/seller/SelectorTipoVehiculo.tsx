@@ -20,25 +20,25 @@ export default function SelectorTipoVehiculo({
     // Marco rojo cuando hay texto ingresado y no cumple el formato de patente chilena
     const patenteInvalida = patente.length > 0 && !patenteValida;
 
-    return <div className="text-neutral-900 shadow-md rounded-lg">
-        <div className="flex items-center gap-3 bg-[#015796] text-white px-8 py-4 rounded-xl rounded-b-none">
-            <div className="w-24 h-24">
-                <FaCar className="text-[#F6AA0A] text-8xl" />
+    return <div className="shrink-0 rounded-lg text-neutral-900 shadow-md">
+        <div className="flex items-center gap-3 rounded-b-none rounded-xl bg-[#015796] px-5 py-2 text-white">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center">
+                <FaCar className="text-5xl text-[#F6AA0A]" />
             </div>
             <div className={`flex bebas w-full`} >
-                <span className="text-6xl tracking-wide font-bold mx-6 mt-4">PATENTE</span>
+                <span className="mx-3 self-center text-4xl font-bold tracking-wide">PATENTE</span>
                 <input
                     type="text"
                     value={patente}
                     onChange={(e) => setPatente(e.currentTarget.value.toUpperCase())}
                     maxLength={6}
                     placeholder="BBBB12"
-                    className={`text-5xl w-full bg-white border-2 rounded-md ml-2 text-neutral-900 uppercase p-4 ${patenteInvalida ? "border-red-500" : "border-gray-300"}`}
+                    className={`ml-2 w-full rounded-md border-2 bg-white px-3 py-2 text-3xl text-neutral-900 uppercase ${patenteInvalida ? "border-red-500" : "border-gray-300"}`}
                 />
             </div>
         </div>
 
-        <div className="w-full">
+        <div className="w-full space-y-1">
             {vehiculos.map(
                 (vehiculo) => {
                     const selected =
@@ -51,7 +51,7 @@ export default function SelectorTipoVehiculo({
                             onClick={() =>
                                 onSelected(vehiculo.id)
                             }
-                            className={`w-full transition-all duration-300 m-1 border-2 rounded-lg
+                            className={`h-[clamp(6.25rem,8.2dvh,7.25rem)] w-full rounded-lg border-2 transition-all duration-300
                     ${selected
                                     ? "bg-[#FCF5EB] border-[#F6AA0A]"
                                     : "border-neutral-300"
@@ -59,25 +59,25 @@ export default function SelectorTipoVehiculo({
                   `}
                         >
                             <div className="w-full flex">
-                                <div className="w-4/12 text-neutral-950 pl-2">
+                                <div className="flex w-4/12 items-center pl-2 text-neutral-950">
                                     <img
                                         src={vehiculo.image}
                                         alt={vehiculo.nombre}
-                                        className="h-36 object-contain mx-auto"
+                                        className="h-24 max-w-full object-contain mx-auto"
                                     />
                                 </div>
 
-                                <div className={`${selected ? 'font-bold' : 'font-normal'} w-4/12 flex p-2 text-left text-neutral-900`}>
-                                    <div>
+                                <div className={`${selected ? 'font-bold' : 'font-normal'} flex w-4/12 items-center p-2 text-left text-neutral-900`}>
+                                    <div className="min-w-0">
                                         <h3
-                                            className={`bebas text-6xl`}
+                                            className="bebas text-4xl leading-none"
                                         >
                                             {
                                                 vehiculo.nombre
                                             }
                                         </h3>
 
-                                        <p className="text-3xl text-neutral-800 min-h-10">
+                                        <p className="mt-1 text-xl leading-tight text-neutral-800">
                                             {
                                                 vehiculo.descripcion
                                             }
@@ -85,11 +85,11 @@ export default function SelectorTipoVehiculo({
                                     </div>
                                 </div>
 
-                                <div className="w-4/12 relative right-8">
-                                    {selected ? <FaCheckCircle className={`absolute text-[#F6AA0A] text-6xl mr-0 -right-4 top-4`} />
-                                        : <FaRegCircle className={`absolute text-gray-200 text-6xl mr-0 -right-4 top-4`} />}
+                                <div className="relative w-4/12">
+                                    {selected ? <FaCheckCircle className="absolute right-2 top-2 text-4xl text-[#F6AA0A]" />
+                                        : <FaRegCircle className="absolute right-2 top-2 text-4xl text-gray-200" />}
                                     <div
-                                        className={`${selected ? 'text-[#F6AA0A]' : 'text-neutral-700'} absolute right-12 top-10 bebas text-7xl mt-4 text-right pr-2 font-bold`}
+                                        className={`${selected ? 'text-[#F6AA0A]' : 'text-neutral-700'} absolute inset-x-0 bottom-2 bebas pr-2 text-right text-5xl font-bold leading-none`}
                                     >
                                         $
                                         {vehiculo.precio.toLocaleString(

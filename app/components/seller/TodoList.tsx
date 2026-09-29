@@ -248,7 +248,7 @@ function ServicioItem({
             onClick={onToggle}
             disabled={disabled}
             className={`
-                flex items-center justify-between gap-4 border-4 rounded-lg px-4 py-3.5 w-full text-left
+                flex items-center justify-between gap-4 rounded-lg border-2 px-3 py-2.5 w-full text-left
                 transition-all touch-manipulation
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'}
                 ${completado 
@@ -266,15 +266,15 @@ function ServicioItem({
                     {completado && <FaCheck size={22} className="text-[#ADCCE6]" />}
                 </div>
 
-                <div className={`text-6xl shrink-0 ${completado ? 'text-[#0870C6]' : 'text-gray-300'}`}>
+                <div className={`text-4xl shrink-0 ${completado ? 'text-[#0870C6]' : 'text-gray-300'}`}>
                     {servicio.icon}
                 </div>
 
                 <div className="min-w-0">
-                    <div className={`oswald text-3xl leading-tight truncate ${completado ? 'text-[#0870C6]' : 'text-neutral-800'}`}>
+                    <div className={`oswald text-2xl leading-tight truncate ${completado ? 'text-[#0870C6]' : 'text-neutral-800'}`}>
                         {servicio.nombre}
                     </div>
-                    <div className="text-2xl text-neutral-400 truncate">{servicio.detalle}</div>
+                    <div className="text-xl text-neutral-400 truncate">{servicio.detalle}</div>
                 </div>
             </div>
             
@@ -327,17 +327,17 @@ function OrdenExpandida({
         orden.servicios.every((s) => checkedIds.has(s.id));
 
     return (
-        <div className="bg-white border border-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.1)] rounded-xl p-6 space-y-4">
+        <div className="bg-white border border-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.1)] rounded-xl p-4 space-y-3">
             {/* Header de la orden */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <img
                         src={VEHICULO_IMAGE[orden.vehiculoId] || "/auto.png"}
                         alt={VEHICULO_LABEL[orden.vehiculoId] ?? "Vehículo"}
-                        className="h-36 object-contain mx-auto"
+                        className="h-28 object-contain mx-auto"
                     />
                     <div>
-                        <div className="bebas text-5xl font-bold leading-none tracking-wide text-[#1F2C4D] flex items-center gap-3">
+                        <div className="bebas text-4xl font-bold leading-none tracking-wide text-[#1F2C4D] flex items-center gap-3">
                             {orden.patente || "—"}
                             {orden.premium && (
                                 <span className="bebas text-xl px-3 py-1 rounded-full bg-[#F6AA0A] text-[#1F2C4D] tracking-wide">
@@ -345,7 +345,7 @@ function OrdenExpandida({
                                 </span>
                             )}
                         </div>
-                        <div className="text-3xl text-neutral-500">
+                        <div className="text-2xl text-neutral-500">
                             {VEHICULO_LABEL[orden.vehiculoId] ?? "Vehículo"}
                             {orden.servicios.length === 0 && (
                                 <span className="ml-2 text-sm text-neutral-400">
@@ -372,7 +372,7 @@ function OrdenExpandida({
             {/* Barra de progreso - solo si hay servicios */}
             {orden.servicios.length > 0 && (
                 <div className="space-y-1.5">
-                    <div className="flex justify-between text-neutral-500 text-4xl">
+                    <div className="flex justify-between text-neutral-500 text-3xl">
                         <span>Progreso</span>
                         <span>{checkedIds.size}/{orden.servicios.length}</span>
                     </div>
@@ -418,7 +418,7 @@ function OrdenExpandida({
                 disabled={!todosCompletados || isUpdating}
                 className={`
                     w-full flex items-center justify-center gap-3 rounded-lg px-6 py-4 
-                    bebas text-3xl tracking-wide transition-all touch-manipulation
+                    bebas text-2xl tracking-wide transition-all touch-manipulation
                     ${todosCompletados && !isUpdating
                         ? 'bg-[#0870C6] text-white hover:bg-[#065a9e] active:scale-[0.98] cursor-pointer'
                         : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
@@ -478,13 +478,13 @@ function OrdenCompacta({ orden }: { orden: OrdenProcesada }) {
                 />
                 </div>
                 <div>
-                    <div className="bebas text-4xl font-bold leading-none tracking-wide text-[#1F2C4D]">
+                        <div className="bebas text-3xl font-bold leading-none tracking-wide text-[#1F2C4D]">
                         {orden.patente || "—"}
                     </div>
                     <div className="text-base text-neutral-500">
                         {VEHICULO_LABEL[orden.vehiculoId] ?? "Vehículo"}
                         {orden.servicios.length > 0 && (
-                            <span className="ml-2 text-4xl text-green-500">
+                            <span className="ml-2 text-3xl text-green-500">
                                 ✓ {orden.serviciosCompletados?.length || 0}/{orden.servicios.length}
                             </span>
                         )}
@@ -495,16 +495,16 @@ function OrdenCompacta({ orden }: { orden: OrdenProcesada }) {
             <div className="flex items-center gap-3 text-[#1F2C4D]">                
                 <div className="text-right leading-tight">
                     <div className="flex">
-                        <FaClock size={42} className="text-[#1F2C4D]/40" />
+                        <FaClock size={32} className="text-[#1F2C4D]/40" />
                         <div className="bebas font-bold ml-3">
                             <HoraConPeriodo
                                 ts={orden.endAt}
-                                horaClassName="text-5xl"
+                                horaClassName="text-4xl"
                                 periodoClassName="text-base text-neutral-400 normal-case tracking-normal"
                             />
                         </div>
                     </div>                    
-                    <div className="text-2xl mt-3 text-neutral-400 uppercase tracking-wider">
+                    <div className="text-xl mt-2 text-neutral-400 uppercase tracking-wider">
                         Término
                     </div>
                 </div>

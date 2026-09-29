@@ -12,12 +12,12 @@ export default function ServiciosAdicionales({
   serviciosSeleccionados: string[];
   toggleServicio: (id: string) => void;
 }) {
-  return <div className="text-neutral-900 shadow-md rounded-xl">
-    <div className={`flex text-center text-2xl bg-[#015796] text-white px-8 py-5 rounded-t-xl`}>
-      <BsStars className="text-white text-6xl" />
-      <span className="text-6xl ml-8 font-bold">ADICIONALES</span>
+  return <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl text-neutral-900 shadow-md">
+    <div className="flex shrink-0 items-center rounded-t-xl bg-[#015796] px-4 py-2 text-center text-white">
+      <BsStars className="text-3xl" />
+      <span className="ml-4 text-4xl font-bold">ADICIONALES</span>
     </div>
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       {adicionales.map(
         (servicio, index) => {
           const checked =
@@ -30,7 +30,7 @@ export default function ServiciosAdicionales({
           return (
             <div
               key={servicio.id}
-              className={`flex items-center justify-between border-4 p-6 cursor-pointer transition-all 
+              className={`flex min-h-0 flex-1 items-center justify-between border-2 px-4 py-2 cursor-pointer transition-all
                         ${checked
                   ? "border-[#ADCCE6] bg-[#E8F0F5]"
                   : "border-gray-200 text-neutral-950"
@@ -41,18 +41,18 @@ export default function ServiciosAdicionales({
                         toggleServicio(servicio.id);
                       }}
             >
-              <div className="flex items-center gap-4">
-                <div className={`w-20 h-20 rounded-md p-4 ${checked ? 'bg-[#0870C6]' : 'border-2 border-gray-300'}`}>
-                  {checked && <FaCheck size={50} className="text-[#ADCCE6]" />}
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${checked ? 'bg-[#0870C6]' : 'border-2 border-gray-300'}`}>
+                  {checked && <FaCheck size={28} className="text-[#ADCCE6]" />}
                 </div>
-                {servicio.icon && <div className={`text-7xl ${checked ? 'text-[#0870C6]' : 'text-gray-300'}`}>{servicio.icon}</div>}
-                <div>
-                  <div className={`oswald text-4xl`}>{servicio.nombre}</div>
-                  <div className="text-4xl text-neutral-400">{servicio.detalle}</div>
+                {servicio.icon && <div className={`shrink-0 text-4xl ${checked ? 'text-[#0870C6]' : 'text-gray-300'}`}>{servicio.icon}</div>}
+                <div className="min-w-0">
+                  <div className="oswald truncate text-2xl leading-tight">{servicio.nombre}</div>
+                  <div className="truncate text-lg text-neutral-400">{servicio.detalle}</div>
                 </div>
               </div>
 
-              <div className={`bebas text-6xl font-bold ${checked ? 'text-[#0870C6]' : 'text-neutral-400'}`}>
+              <div className={`bebas shrink-0 whitespace-nowrap pl-2 text-4xl font-bold ${checked ? 'text-[#0870C6]' : 'text-neutral-400'}`}>
                 $ {servicio.precio.toLocaleString("es-CL")}
               </div>
             </div>

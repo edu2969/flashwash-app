@@ -58,7 +58,7 @@ export default function OperatorPanel() {
     };
 
     return (
-        <div className="h-screen w-full overflow-hidden bg-neutral-900">
+        <div className="h-dvh w-full overflow-hidden bg-neutral-900">
             {/* Contenedor de deslizamiento */}
             <div 
                 ref={containerRef}
